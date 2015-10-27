@@ -33,7 +33,10 @@ ENTRYPOINT [ "/usr/bin/reefer", \
     "-E" \
 ]
 
-CMD /etc/init.d/alsa-utils start && env && /jitsi-hammer/jitsi-hammer.sh \
+
+CMD /etc/init.d/alsa-utils start && env && ./generateCreds.sh $TOKEN $USERS && /jitsi-hammer/jitsi-hammer.sh \
+    -users $USERS \
+    -credentials /credentials \
     -XMPPdomain $XMPP_DOMAIN \
     -XMPPhost $HAMMER_XMPP_HOST \
     -port $PORT \
@@ -46,6 +49,5 @@ CMD /etc/init.d/alsa-utils start && env && /jitsi-hammer/jitsi-hammer.sh \
     -room $ROOM_NAME \
     -interval $INTERVAL \
     -length $LENGTH \
-    -users $USERS \
     -focususerjid $FOCUSUSERJID \
     -MUCvideobridge $MUC_VIDEOBRIDGE
