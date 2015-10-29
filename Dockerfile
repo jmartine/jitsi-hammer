@@ -34,7 +34,7 @@ ENTRYPOINT [ "/usr/bin/reefer", \
 ]
 
 
-CMD /etc/init.d/alsa-utils start && env && ./generateCreds.sh $TOKEN $USERS && /jitsi-hammer/jitsi-hammer.sh \
+CMD /etc/init.d/alsa-utils start && env && ./generateCreds.sh $TOKEN $USERS $ROOM_NAME && /jitsi-hammer/jitsi-hammer.sh \
     -users $USERS \
     -credentials /credentials \
     -XMPPdomain $XMPP_DOMAIN \
