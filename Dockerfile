@@ -1,4 +1,4 @@
-FROM java:6
+FROM java:8
 
 ENV INTERVAL=2000 \
     LENGTH=120 \

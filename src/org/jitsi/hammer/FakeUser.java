@@ -310,7 +310,7 @@ public class FakeUser implements PacketListener
         };
         iq.setType(IQ.Type.SET);
         iq.setTo(focusUserJid);
-        iq.setProperty("bridge", serverInfo.getMUCvideobridge());
+        //iq.setProperty("bridge", serverInfo.getMUCvideobridge());
         iq.setProperty("channelLastN", "-1");
         iq.setProperty("adaptiveLastN", "false");
         iq.setProperty("adaptiveSimulcast", "false");
@@ -377,25 +377,29 @@ public class FakeUser implements PacketListener
         presence.setPriority(128);
         presence.setStatus("Fake User");
         connection.sendPacket(presence);
-
-        connectMUC();
     }
 
     /**
      * Join the MUC, send a presence packet to display the current nickname
      * @throws XMPPException if the connection to the MUC goes wrong
      */
-    private void connectMUC()
+    public synchronized void connectMUC()
     {
         roomURL = serverInfo.getRoomName()+"@"+serverInfo.getMUCDomain();
         logger.info(this.nickname + " : Trying to connect to MUC " + roomURL);
         muc = new MultiUserChat(connection, roomURL);
+        int maxAttempts = 5;
+        int attempts = 0;
         while(true)
         {
+            if (attempts > maxAttempts) {
+                logger.fatal(this.nickname + " Max number of attempts trying to connect to the muc!");
+                break;
+            }
+            attempts++;
             try
             {
                 muc.join(nickname);
-
                 muc.sendMessage("Hello World!");
 
                 /*
@@ -422,8 +426,8 @@ public class FakeUser implements PacketListener
                 }
                 else
                 {
-                    logger.fatal(this.nickname + " : could not enter MUC",e);
-                    muc = null;
+                    logger.warn(this.nickname + " : could not enter MUC",e);
+                    continue;
                 }
             }
             break;

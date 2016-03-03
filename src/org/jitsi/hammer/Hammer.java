@@ -160,7 +160,7 @@ public class Hammer
     /**
      * The thread that run the <tt>HammerStats</tt> of this <tt>Hammer</tt>
      */
-    private final Thread hammerStatsThread;
+    private Thread hammerStatsThread;
 
     /**
      * boolean used to know if the <tt>Hammer</tt> is started or not.
@@ -181,7 +181,13 @@ public class Hammer
      * @param numberOfUser The number of virtual users this <tt>Hammer</tt>
      * will create and handle.
      */
-    public Hammer(HostInfo host, MediaDeviceChooser mdc, String nickname, int numberOfUser, boolean disableStats, String logFile)
+    public Hammer(
+            HostInfo host,
+            MediaDeviceChooser mdc,
+            String nickname,
+            int numberOfUser,
+            boolean disableStats,
+            String logFile)
     {
         this.nickname = nickname;
         this.serverInfo = host;
@@ -192,7 +198,7 @@ public class Hammer
             try {
                 OutputStream writer = new FileOutputStream(output);
                 hammerStats = new HammerStats(writer);
-                hammerStatsThread = new Thread(hammerStats);
+                //hammerStatsThread = new Thread(hammerStats);
             } catch (Exception e) {
                 logger.error("Failed to create hammer stats file", e);
                 throw new RuntimeException(e);
@@ -368,17 +374,25 @@ public class Hammer
             Iterator<Credential> credIt = credentials.iterator();
             Credential credential = null;
             boolean isFirst = true;
+            FakeUserStats userStats;
 
             for(FakeUser user : fakeUsers) {
                 credential = credIt.next();
+
+                //establish XMPP connection
                 user.start(credential.getUsername(),credential.getPassword());
-                if(isFirst) {
-                    user.createConference(this.serverInfo.getFocusUserJid());
+                if (hammerStats != null
+                        && (userStats = user.getFakeUserStats()) != null)
+                    hammerStats.addFakeUsersStats(userStats);
+
+                if (isFirst) {
+                    //Invite the focus to the party
+                    user.createConference(serverInfo.getFocusUserJid());
                     isFirst = false;
                 }
-                if (hammerStats != null && user.getFakeUserStats() != null) {
-                    hammerStats.addFakeUsersStats(user.getFakeUserStats());
-                }
+
+                //join the MUC
+                user.connectMUC();
                 Thread.sleep(wait);
             }
         } catch (XMPPException e) {
@@ -452,6 +466,7 @@ public class Hammer
         hammerStats.setAllStatsLogging(allStats);
         hammerStats.setSummaryStatsLogging(summaryStats);
         hammerStats.setTimeBetweenUpdate(statsPollingTime);
+        hammerStatsThread = new Thread(hammerStats);
         hammerStatsThread.start();
     }
 
